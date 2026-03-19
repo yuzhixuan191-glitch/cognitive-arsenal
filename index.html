@@ -133,7 +133,9 @@ button{cursor:pointer;font-family:inherit}
 /* ===== MODAL ===== */
 .m-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:500;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
 .m-ov.open{opacity:1;pointer-events:auto}
-.modal{position:fixed;top:0;right:0;width:min(820px,100vw);height:100vh;background:var(--bg-1);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-left:1px solid var(--bd)}
+.modal{position:fixed;top:0;right:0;width:min(820px,100vw);height:100vh;background:var(--bg-1);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-left:1px solid var(--bd);overflow:hidden}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.06;pointer-events:none;z-index:0;transition:background .4s;background:var(--modal-glow,transparent)}
+.modal>*{position:relative;z-index:1}
 .modal.open{transform:translateX(0)}
 .m-head{display:flex;align-items:center;padding:16px 28px;border-bottom:1px solid var(--bd);gap:12px;flex-shrink:0}
 .m-close{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--tx-2);padding:5px 10px;font-family:var(--f-mono);font-size:.72rem;transition:all .15s}
@@ -726,6 +728,9 @@ async function openArt(idx) {
   document.getElementById('mGenre').textContent = a.genre;
   document.getElementById('mGenre').style.background = (GENRE_COLORS[a.genre]||'#888') + '22';
   document.getElementById('mGenre').style.color = GENRE_COLORS[a.genre]||'#888';
+  // Set adaptive modal background glow
+  const gc = GENRE_COLORS[a.genre]||'#888';
+  document.getElementById('modal').style.setProperty('--modal-glow', `radial-gradient(ellipse at 30% 20%, ${gc}, transparent 60%), radial-gradient(ellipse at 80% 80%, ${gc}88, transparent 50%)`);
   document.getElementById('mMeta').textContent = `${a.origin} · ${a.cell} · ${a.chars > 1000 ? (a.chars/1000).toFixed(1)+'k' : a.chars}字`;
   document.getElementById('mContent').innerHTML = '<p style="color:var(--tx-3)">加载中...</p>';
   document.getElementById('mOv').classList.add('open');
@@ -855,8 +860,8 @@ async function shareTo(platform) {
 }
 
 // ===== EXPORT IMAGE (MULTI-PAGE FLOMO CARDS) =====
-const CARD_W = 840; // 2x for retina
-const CARD_PAD = 60;
+const CARD_W = 1080; // 2x for retina (540px logical)
+const CARD_PAD = 50;
 const CARD_CONTENT_W = CARD_W - CARD_PAD * 2;
 const CHARS_PER_PAGE = 350; // ~chars per card page
 
@@ -902,14 +907,14 @@ function renderCardCanvas(a, plainText, pageIndex, totalPages) {
   const ctx = canvas.getContext('2d');
 
   // Measure content height first
-  const titleFontSize = 28;
-  const bodyFontSize = 22;
-  const lineH = 38;
-  const titleLineH = 42;
+  const titleFontSize = 24;
+  const bodyFontSize = 17;
+  const lineH = 28;
+  const titleLineH = 34;
 
   // Split text into pages
   const allLines = wrapText(ctx, plainText, CARD_CONTENT_W, bodyFontSize, lineH);
-  const MAX_LINES_PER_PAGE = 16;
+  const MAX_LINES_PER_PAGE = 40;
   const pageLines = [];
   for (let i = 0; i < allLines.length; i += MAX_LINES_PER_PAGE) {
     pageLines.push(allLines.slice(i, i + MAX_LINES_PER_PAGE));
@@ -954,11 +959,11 @@ function renderCardCanvas(a, plainText, pageIndex, totalPages) {
   let y = 40;
 
   // Header
-  ctx.font = '600 18px "Noto Serif SC", serif';
+  ctx.font = '600 16px "Noto Serif SC", serif';
   ctx.fillStyle = '#8a7235';
   ctx.fillText('Refine无羡 · 认知军火库', CARD_PAD, y);
   const pageLabel = actualTotalPages > 1 ? `${pageIndex + 1} / ${actualTotalPages}` : new Date().toISOString().slice(0, 10).replace(/-/g, '.');
-  ctx.font = '16px "JetBrains Mono", monospace';
+  ctx.font = '14px "JetBrains Mono", monospace';
   ctx.fillStyle = '#b0a890';
   const plWidth = ctx.measureText(pageLabel).width;
   ctx.fillText(pageLabel, CARD_W - CARD_PAD - plWidth, y);

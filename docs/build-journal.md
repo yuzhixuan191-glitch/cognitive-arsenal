@@ -339,5 +339,75 @@ if (navigator.share) {
 
 ---
 
+## 第八章：视觉精调——卡片密度与阅读氛围
+
+### 问题 1：卡片图内容密度太低
+
+用户反馈：文字转图片功能生成的卡片每页只有很少的内容，大量文章被分成了过多页数。原因分析：
+
+| 参数 | 旧值 | 问题 |
+|------|------|------|
+| CARD_W | 840px | 卡片宽度较窄，每行容纳的中文字数有限 |
+| bodyFontSize | 22px | 正文字号偏大，占空间多 |
+| lineH | 38px | 行高过于宽松 |
+| MAX_LINES_PER_PAGE | 16 | 每页最多 16 行，内容量太少 |
+
+**解决方案**：全面调整卡片渲染参数：
+
+| 参数 | 旧值 → 新值 | 效果 |
+|------|-------------|------|
+| CARD_W | 840 → 1080 | 更宽的画布，每行多 6-8 个字 |
+| CARD_PAD | 60 → 50 | 缩小边距，增加内容区宽度 |
+| bodyFontSize | 22 → 17 | 更紧凑的正文，阅读仍然清晰 |
+| lineH | 38 → 28 | 行距收紧，密度提升 |
+| titleFontSize | 28 → 24 | 标题适当缩小 |
+| titleLineH | 42 → 34 | 标题行距配合缩小 |
+| MAX_LINES_PER_PAGE | 16 → 40 | 每页容纳 2.5 倍内容 |
+
+综合效果：每张卡片的信息容量大约提升了 **3-4 倍**。原来需要 10 页的文章现在可能只需要 3 页。
+
+### 问题 2：文章阅读背景太暗太单调
+
+用户反馈：打开文章后的阅读面板背景是纯黑色的，缺乏氛围感。
+
+**解决方案**：为阅读面板 `.modal` 添加自适应半透明背景光晕：
+
+1. 在 `.modal` 上添加 `::before` 伪元素，用 `radial-gradient` 绘制两个光晕（左上 + 右下）
+2. 光晕颜色取自文章体裁对应的颜色（`GENRE_COLORS`）
+3. 通过 CSS 自定义属性 `--modal-glow` 在 `openArt()` 中动态设置
+4. 光晕 opacity 设为 6%，足够营造氛围但不干扰阅读
+
+```css
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: .06;
+  pointer-events: none;
+  background: var(--modal-glow, transparent);
+}
+```
+
+```javascript
+// openArt() 中动态设置
+const gc = GENRE_COLORS[a.genre] || '#888';
+modal.style.setProperty('--modal-glow',
+  `radial-gradient(ellipse at 30% 20%, ${gc}, transparent 60%),
+   radial-gradient(ellipse at 80% 80%, ${gc}88, transparent 50%)`);
+```
+
+效果：每篇文章打开时，背景会根据体裁呈现不同色调的微光——原创文章是金色氛围，认知纪要是绿色，Prompt/协议是蓝色……既保持了深色阅读界面的舒适度，又让每种体裁有了独特的视觉身份。
+
+### 思考
+
+这两个改动看似小，但都直接影响用户体验的核心环节：
+
+- 卡片密度影响"分享"——内容太少的卡片让人没有转发欲望
+- 阅读背景影响"沉浸感"——从纯黑到微光的变化，就像从地下室搬到了有壁灯的书房
+
+好的 UI 改动不是加东西，而是让已有的东西**更舒服**。
+
+---
+
 *更新时间: 2026-03-19*
 *构建工具: Python (openpyxl, json) + 原生 HTML/CSS/JS + GitHub Pages*
