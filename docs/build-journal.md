@@ -285,5 +285,59 @@ GitHub Pages 在线知识库
 
 ---
 
-*文档撰写时间: 2026-03-19*
+## 第七章：移动端实战修复
+
+### 问题 1: 分享按钮无法调起手机原生应用
+
+用户在手机上点击"分享到微信/QQ/抖音"时，只是复制了链接，没有调起对应 App。
+
+**根因分析**：微信、QQ、抖音都没有提供从网页端直接调起分享的公开 API。之前的 `window.open()` 方式在移动端体验很差——QQ 的分享链接会打开一个新网页，而不是调起 QQ App。
+
+**解决方案**：使用 Web Share API (`navigator.share()`)。这是浏览器原生的分享接口，在移动端会弹出系统级分享面板，用户可以直接选择微信、QQ、抖音等已安装的 App。
+
+```javascript
+// 手机上调起系统分享面板
+if (navigator.share) {
+  await navigator.share({ title, text: desc, url: pageUrl });
+}
+```
+
+**设计调整**：
+- 新增"系统分享"选项排在第一位——这是手机上最佳的分享方式
+- 微信/QQ/抖音按钮在手机上也改为调用 `navigator.share()`，因为通过系统分享面板选择对应 App 是最可靠的路径
+- 桌面端保持原有行为（QQ 走 connect.qq.com，微博走 service.weibo.com）
+- `navigator.share()` 不可用时（部分桌面浏览器），自动降级为复制链接
+
+### 问题 2: 手机端图片下载失败 + 只截取了头部片段
+
+两个子问题：
+
+**2a. 下载失败**：原方案用 `html2canvas` 将 DOM 节点截图，但 `html2canvas` 在移动端有诸多兼容性问题（跨域字体加载、CSS 伪元素渲染、内存限制）。`<a>` 标签的 `download` 属性在 Mobile Safari 上也有限制。
+
+**2b. 只截了头部**：原来的 flomo 卡片设置了 `max-height: 280px` + `overflow: hidden`，导致只显示了文章开头的一小段。
+
+**解决方案：从 html2canvas 迁移到原生 Canvas API + 多页分片**
+
+核心思路：
+1. 用 `stripMarkdown()` 将 Markdown 正文转为纯文本
+2. 用 Canvas API 的 `measureText()` 做文字排版，计算每行能放多少字
+3. 按固定行数（16 行/页）将文本分成多页
+4. 每页独立生成一张 Canvas 卡片图
+5. 用 `canvas.toBlob()` → `URL.createObjectURL()` 下载，比 `toDataURL()` 在手机上更可靠
+6. 如果 blob 下载也失败（Safari 某些版本），fallback 到 `window.open(dataUrl)` 在新标签页打开图片
+7. 预览界面提示"手机可长按图片保存"——这是移动端最稳定的保存方式
+
+**卡片分页逻辑**：
+- 第 1 页：品牌头 + 标题 + 正文前 16 行 + 标签尾
+- 第 2~N 页：品牌头 + 正文续 + 标签尾
+- 每页右上角显示 `1/N` 页码
+- 如果只有 1 页，显示日期而非页码
+
+**移除 html2canvas 依赖**：不再需要外部库，减少了 ~100KB 的加载量。原生 Canvas API 在所有现代浏览器上都有一致的行为。
+
+**Canvas 绘制的一个细节**：中文字体在 Canvas 中需要特别注意。`ctx.font` 必须指定 fallback 字体链，因为 Google Fonts 的中文字体可能还没加载完成。实际上 Canvas 会使用系统中已有的字体，所以在中文环境下通常能用苹方或思源宋体渲染。
+
+---
+
+*更新时间: 2026-03-19*
 *构建工具: Python (openpyxl, json) + 原生 HTML/CSS/JS + GitHub Pages*

@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 /* ===== CSS VARIABLES ===== */
 :root {
@@ -242,7 +241,7 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
 /* ===== IMAGE CARD OVERLAY ===== */
 .img-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:700;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .img-ov.open{display:flex}
-.img-modal{background:var(--bg-1);border:1px solid var(--bd);border-radius:10px;max-width:520px;width:90vw;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.img-modal{background:var(--bg-1);border:1px solid var(--bd);border-radius:10px;max-width:520px;width:92vw;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
 .img-head{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
 .img-body{padding:24px;overflow-y:auto;display:flex;justify-content:center}
 
@@ -316,6 +315,7 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
       <div class="tb-share-wrap">
         <button class="tb-btn" onclick="toggleShareMenu()" title="分享"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg><span>分享</span></button>
         <div class="share-menu" id="shareMenu">
+          <button onclick="shareTo('native')"><span class="sh-ico" style="background:var(--acc)">📤</span>系统分享</button>
           <button onclick="shareTo('wechat')"><span class="sh-ico" style="background:#07c160">微</span>微信</button>
           <button onclick="shareTo('qq')"><span class="sh-ico" style="background:#12b7f5">Q</span>QQ</button>
           <button onclick="shareTo('weibo')"><span class="sh-ico" style="background:#e6162d">微</span>微博</button>
@@ -358,30 +358,13 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
   <div class="img-modal">
     <div class="img-head">
       <span style="font-family:var(--f-serif);font-weight:600">卡片预览</span>
-      <div style="display:flex;gap:6px">
-        <button class="btn-ghost" onclick="downloadCard()">下载图片</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:.65rem;color:var(--tx-3)">手机可长按图片保存</span>
+        <button class="btn-ghost" onclick="downloadCard()">全部下载</button>
         <button class="m-close" onclick="closeImgPreview()">✕</button>
       </div>
     </div>
-    <div class="img-body" id="imgBody">
-      <div class="flomo-card" id="flomoCard">
-        <div class="fl-header">
-          <div class="fl-brand">Refine无羡 · 认知军火库</div>
-          <div class="fl-date" id="flDate"></div>
-        </div>
-        <div class="fl-divider"></div>
-        <div class="fl-title" id="flTitle"></div>
-        <div class="fl-content" id="flContent"></div>
-        <div class="fl-divider"></div>
-        <div class="fl-footer">
-          <div class="fl-tags">
-            <span class="fl-tag" id="flGenre"></span>
-            <span class="fl-tag" id="flTopic"></span>
-          </div>
-          <div class="fl-origin" id="flOrigin"></div>
-        </div>
-      </div>
-    </div>
+    <div class="img-body" id="imgBody" style="flex-direction:column;padding:20px"></div>
   </div>
 </div>
 
@@ -785,7 +768,6 @@ async function copyArticle() {
 function toggleShareMenu() {
   const m = document.getElementById('shareMenu');
   m.classList.toggle('open');
-  // Close on outside click
   if (m.classList.contains('open')) {
     setTimeout(() => {
       const handler = (e) => {
@@ -799,7 +781,7 @@ function toggleShareMenu() {
   }
 }
 
-function shareTo(platform) {
+async function shareTo(platform) {
   const a = curArticles[curArtIdx];
   if (!a) return;
   const pageUrl = window.location.href.split('#')[0] + '#article-' + a.id;
@@ -807,48 +789,301 @@ function shareTo(platform) {
   const desc = a.preview.replace(/[#*_`>]/g, '').substring(0, 100);
   document.getElementById('shareMenu').classList.remove('open');
 
+  // Helper: copy text with fallback
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch(e) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
   switch(platform) {
+    case 'native':
+      // Web Share API — triggers native share sheet on mobile (WeChat, QQ, Douyin all appear)
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: title, text: desc, url: pageUrl });
+          toast('分享成功');
+        } catch(e) {
+          if (e.name !== 'AbortError') toast('分享失败');
+        }
+      } else {
+        await copyText(title + '\n' + desc + '\n\n' + pageUrl);
+        toast('当前浏览器不支持系统分享，链接已复制');
+      }
+      break;
     case 'wechat':
-      // WeChat has no web share API; copy link + prompt user
-      navigator.clipboard.writeText(title + '\n' + desc + '\n\n' + pageUrl).then(() => {
+      if (navigator.share) {
+        try { await navigator.share({ title: title, text: desc, url: pageUrl }); }
+        catch(e) { /* user cancelled */ }
+      } else {
+        await copyText(title + '\n' + desc + '\n\n' + pageUrl);
         toast('链接已复制，请打开微信粘贴分享');
-      });
+      }
       break;
     case 'qq':
-      window.open(`https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(title)}&desc=${encodeURIComponent(desc)}&site=认知军火库`, '_blank');
+      // Mobile: try native share; Desktop: QQ share widget
+      if (/mobile|android|iphone|ipad/i.test(navigator.userAgent) && navigator.share) {
+        try { await navigator.share({ title: title, text: desc, url: pageUrl }); }
+        catch(e) { /* cancelled */ }
+      } else {
+        window.open(`https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(title)}&desc=${encodeURIComponent(desc)}&site=认知军火库`, '_blank');
+      }
       break;
     case 'weibo':
       window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(title + ' ' + desc)}`, '_blank');
       break;
     case 'douyin':
-      navigator.clipboard.writeText(title + '\n' + desc + '\n\n' + pageUrl).then(() => {
+      if (navigator.share) {
+        try { await navigator.share({ title: title, text: desc, url: pageUrl }); }
+        catch(e) { /* cancelled */ }
+      } else {
+        await copyText(title + '\n' + desc + '\n\n' + pageUrl);
         toast('链接已复制，请打开抖音粘贴分享');
-      });
+      }
       break;
     case 'link':
-      navigator.clipboard.writeText(pageUrl).then(() => {
-        toast('链接已复制到剪贴板');
-      });
+      await copyText(pageUrl);
+      toast('链接已复制到剪贴板');
       break;
   }
 }
 
-// ===== EXPORT IMAGE (FLOMO STYLE) =====
+// ===== EXPORT IMAGE (MULTI-PAGE FLOMO CARDS) =====
+const CARD_W = 840; // 2x for retina
+const CARD_PAD = 60;
+const CARD_CONTENT_W = CARD_W - CARD_PAD * 2;
+const CHARS_PER_PAGE = 350; // ~chars per card page
+
+function stripMarkdown(text) {
+  return text
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*/g, '').replace(/\*/g, '')
+    .replace(/`{1,3}[^`]*`{1,3}/g, '')
+    .replace(/>\s*/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/---+/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function wrapText(ctx, text, maxWidth, fontSize, lineHeight) {
+  const lines = [];
+  const paragraphs = text.split('\n');
+  ctx.font = `${fontSize}px "Noto Sans SC", "PingFang SC", sans-serif`;
+  for (const para of paragraphs) {
+    if (para.trim() === '') { lines.push(''); continue; }
+    let remaining = para;
+    while (remaining.length > 0) {
+      let end = remaining.length;
+      while (ctx.measureText(remaining.substring(0, end)).width > maxWidth && end > 1) {
+        end--;
+      }
+      // Try not to break mid-word for latin chars
+      if (end < remaining.length && end > 1 && /[a-zA-Z]/.test(remaining[end])) {
+        const spaceIdx = remaining.lastIndexOf(' ', end);
+        if (spaceIdx > end * 0.5) end = spaceIdx + 1;
+      }
+      lines.push(remaining.substring(0, end));
+      remaining = remaining.substring(end);
+    }
+  }
+  return lines;
+}
+
+function renderCardCanvas(a, plainText, pageIndex, totalPages) {
+  const canvas = document.createElement('canvas');
+  canvas.width = CARD_W;
+  const ctx = canvas.getContext('2d');
+
+  // Measure content height first
+  const titleFontSize = 28;
+  const bodyFontSize = 22;
+  const lineH = 38;
+  const titleLineH = 42;
+
+  // Split text into pages
+  const allLines = wrapText(ctx, plainText, CARD_CONTENT_W, bodyFontSize, lineH);
+  const MAX_LINES_PER_PAGE = 16;
+  const pageLines = [];
+  for (let i = 0; i < allLines.length; i += MAX_LINES_PER_PAGE) {
+    pageLines.push(allLines.slice(i, i + MAX_LINES_PER_PAGE));
+  }
+
+  const actualTotalPages = pageLines.length;
+  const currentLines = pageLines[pageIndex] || [];
+
+  // Title lines (only first page)
+  let titleLines = [];
+  if (pageIndex === 0) {
+    ctx.font = `bold ${titleFontSize}px "Noto Serif SC", serif`;
+    titleLines = wrapText(ctx, a.title, CARD_CONTENT_W, titleFontSize, titleLineH);
+    if (titleLines.length > 3) titleLines = titleLines.slice(0, 3);
+  }
+
+  // Calculate canvas height
+  const headerH = 80;
+  const titleH = pageIndex === 0 ? titleLines.length * titleLineH + 20 : 0;
+  const divider1H = 30;
+  const contentH = currentLines.length * lineH + 10;
+  const divider2H = 30;
+  const footerH = 70;
+  const totalH = headerH + titleH + divider1H + contentH + divider2H + footerH;
+  canvas.height = totalH;
+
+  // Background
+  ctx.fillStyle = '#fffdf7';
+  ctx.fillRect(0, 0, CARD_W, totalH);
+
+  // Top gold bar
+  const grad = ctx.createLinearGradient(0, 0, CARD_W, 0);
+  grad.addColorStop(0, '#c9a84c');
+  grad.addColorStop(0.5, '#e4c35a');
+  grad.addColorStop(1, '#c9a84c');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CARD_W, 6);
+
+  // Rounded corners visual (just draw over corners with bg)
+  // Skip for canvas simplicity — sharp corners are fine for export
+
+  let y = 40;
+
+  // Header
+  ctx.font = '600 18px "Noto Serif SC", serif';
+  ctx.fillStyle = '#8a7235';
+  ctx.fillText('Refine无羡 · 认知军火库', CARD_PAD, y);
+  const pageLabel = actualTotalPages > 1 ? `${pageIndex + 1} / ${actualTotalPages}` : new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+  ctx.font = '16px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#b0a890';
+  const plWidth = ctx.measureText(pageLabel).width;
+  ctx.fillText(pageLabel, CARD_W - CARD_PAD - plWidth, y);
+  y += 30;
+
+  // Divider 1
+  const divGrad1 = ctx.createLinearGradient(CARD_PAD, 0, CARD_W - CARD_PAD, 0);
+  divGrad1.addColorStop(0, 'transparent');
+  divGrad1.addColorStop(0.5, '#e0d8c8');
+  divGrad1.addColorStop(1, 'transparent');
+  ctx.strokeStyle = divGrad1;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CARD_PAD, y); ctx.lineTo(CARD_W - CARD_PAD, y); ctx.stroke();
+  y += 25;
+
+  // Title (first page only)
+  if (pageIndex === 0 && titleLines.length > 0) {
+    ctx.font = `bold ${titleFontSize}px "Noto Serif SC", serif`;
+    ctx.fillStyle = '#1a1815';
+    for (const line of titleLines) {
+      ctx.fillText(line, CARD_PAD, y);
+      y += titleLineH;
+    }
+    y += 10;
+  }
+
+  // Body content
+  ctx.font = `${bodyFontSize}px "Noto Sans SC", "PingFang SC", sans-serif`;
+  ctx.fillStyle = '#4a4540';
+  for (const line of currentLines) {
+    if (line === '') { y += lineH * 0.5; continue; }
+    ctx.fillText(line, CARD_PAD, y);
+    y += lineH;
+  }
+  y += 15;
+
+  // Divider 2
+  const divGrad2 = ctx.createLinearGradient(CARD_PAD, 0, CARD_W - CARD_PAD, 0);
+  divGrad2.addColorStop(0, 'transparent');
+  divGrad2.addColorStop(0.5, '#e0d8c8');
+  divGrad2.addColorStop(1, 'transparent');
+  ctx.strokeStyle = divGrad2;
+  ctx.beginPath(); ctx.moveTo(CARD_PAD, y); ctx.lineTo(CARD_W - CARD_PAD, y); ctx.stroke();
+  y += 25;
+
+  // Footer tags
+  const tags = [a.genre, a.topic];
+  let tx = CARD_PAD;
+  ctx.font = '16px "Noto Sans SC", sans-serif';
+  for (const tag of tags) {
+    const tw = ctx.measureText(tag).width + 16;
+    // Tag background
+    ctx.fillStyle = '#f0ead8';
+    roundRect(ctx, tx, y - 14, tw, 24, 12);
+    ctx.fill();
+    ctx.fillStyle = '#8a7235';
+    ctx.fillText(tag, tx + 8, y + 4);
+    tx += tw + 8;
+  }
+
+  // Origin text on right
+  ctx.font = '14px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#b0a890';
+  const originW = ctx.measureText(a.origin).width;
+  ctx.fillText(a.origin, CARD_W - CARD_PAD - originW, y + 4);
+
+  return { canvas, totalPages: actualTotalPages };
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+let generatedCards = []; // store {canvas, blob} for download
+
 async function exportImage() {
   const a = curArticles[curArtIdx];
   if (!a) return;
   const content = await loadContent(a);
+  const plainText = stripMarkdown(content);
 
-  // Fill flomo card
-  const now = new Date();
-  document.getElementById('flDate').textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-  document.getElementById('flTitle').textContent = a.title;
-  // Strip markdown for the card, take first ~300 chars
-  const plainText = content.replace(/#{1,6}\s+/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`{1,3}[^`]*`{1,3}/g, '').replace(/>\s*/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/---+/g, '').replace(/\n{2,}/g, '\n').trim();
-  document.getElementById('flContent').textContent = plainText.substring(0, 400) + (plainText.length > 400 ? '...' : '');
-  document.getElementById('flGenre').textContent = a.genre;
-  document.getElementById('flTopic').textContent = a.topic;
-  document.getElementById('flOrigin').textContent = a.origin;
+  // Generate first page to know total
+  const first = renderCardCanvas(a, plainText, 0, 1);
+  const totalPages = first.totalPages;
+
+  // Generate all pages
+  generatedCards = [];
+  for (let i = 0; i < totalPages; i++) {
+    const result = renderCardCanvas(a, plainText, i, totalPages);
+    generatedCards.push(result.canvas);
+  }
+
+  // Show preview
+  const imgBody = document.getElementById('imgBody');
+  imgBody.innerHTML = '';
+
+  // Info bar
+  if (totalPages > 1) {
+    const info = document.createElement('div');
+    info.style.cssText = 'text-align:center;margin-bottom:16px;font-size:.78rem;color:var(--tx-2);font-family:var(--f-mono)';
+    info.textContent = `共 ${totalPages} 张卡片`;
+    imgBody.appendChild(info);
+  }
+
+  // Canvas previews
+  const previewWrap = document.createElement('div');
+  previewWrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+  generatedCards.forEach((canvas, i) => {
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.style.cssText = 'width:100%;max-width:420px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1)';
+    img.alt = `卡片 ${i + 1}/${totalPages}`;
+    previewWrap.appendChild(img);
+  });
+  imgBody.appendChild(previewWrap);
 
   document.getElementById('imgOv').classList.add('open');
 }
@@ -858,21 +1093,49 @@ function closeImgPreview() {
 }
 
 async function downloadCard() {
-  const card = document.getElementById('flomoCard');
-  try {
-    const canvas = await html2canvas(card, {
-      scale: 2,
-      backgroundColor: '#fffdf7',
-      useCORS: true,
-      logging: false,
-    });
-    const link = document.createElement('a');
-    link.download = `认知军火库-${curArticles[curArtIdx]?.title?.substring(0, 20) || '卡片'}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    toast('卡片图片已下载');
-  } catch(e) {
-    toast('图片生成失败: ' + e.message);
+  if (!generatedCards.length) { toast('没有可下载的卡片'); return; }
+  const a = curArticles[curArtIdx];
+  const baseName = (a?.title || '卡片').substring(0, 20).replace(/[/\\?%*:|"<>]/g, '');
+
+  let downloaded = 0;
+  for (let i = 0; i < generatedCards.length; i++) {
+    const canvas = generatedCards[i];
+    const suffix = generatedCards.length > 1 ? `-${i + 1}` : '';
+    const fileName = `认知军火库-${baseName}${suffix}.png`;
+
+    try {
+      // Use blob for better mobile compatibility
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Delay between downloads to avoid browser blocking
+      if (generatedCards.length > 1 && i < generatedCards.length - 1) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+      downloaded++;
+    } catch(e) {
+      // Mobile Safari fallback: open in new tab
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        window.open(dataUrl, '_blank');
+        downloaded++;
+      } catch(e2) {
+        console.error('Download failed:', e2);
+      }
+    }
+  }
+
+  if (downloaded > 0) {
+    toast(`已下载 ${downloaded} 张卡片图`);
+  } else {
+    toast('下载失败，请尝试长按图片保存');
   }
 }
 
