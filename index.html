@@ -149,22 +149,79 @@ button{cursor:pointer;font-family:inherit}
 .a-card .a-foot{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-family:var(--f-mono);font-size:.6rem;color:var(--tx-3)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* ===== MODAL ===== */
+/* ===== READING PROGRESS BAR ===== */
+.read-progress{position:fixed;top:0;right:0;left:0;height:3px;z-index:502;background:transparent;pointer-events:none;opacity:0;transition:opacity .3s}
+.read-progress.active{opacity:1}
+.read-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc-b));transition:width .1s linear;border-radius:0 2px 2px 0}
+
+/* ===== MODAL (READING VIEW) ===== */
 .m-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:500;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
 .m-ov.open{opacity:1;pointer-events:auto}
-.modal{position:fixed;top:0;right:0;width:min(820px,100vw);height:100vh;background:var(--bg-1);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-left:1px solid var(--bd);overflow:hidden}
-.modal::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.06;pointer-events:none;z-index:0;transition:background .4s;background:var(--modal-glow,transparent)}
+.modal{position:fixed;top:0;right:0;width:min(900px,100vw);height:100vh;background:var(--bg-1);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-left:1px solid var(--bd);overflow:hidden}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.04;pointer-events:none;z-index:0;transition:background .4s;background:var(--modal-glow,transparent)}
 .modal>*{position:relative;z-index:1}
 .modal.open{transform:translateX(0)}
-.m-head{display:flex;align-items:center;padding:16px 28px;border-bottom:1px solid var(--bd);gap:12px;flex-shrink:0}
-.m-close{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--tx-2);padding:5px 10px;font-family:var(--f-mono);font-size:.72rem;transition:all .15s}
+
+/* Reading header — slim, clean */
+.m-head{display:flex;align-items:center;padding:12px 28px;border-bottom:1px solid var(--bd);gap:10px;flex-shrink:0}
+.m-close{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--tx-2);padding:5px 10px;font-family:var(--f-mono);font-size:.72rem;transition:all .15s;flex-shrink:0}
 .m-close:hover{border-color:var(--acc-d);color:var(--acc)}
-.m-nav{display:flex;gap:4px}
-.m-nav button{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--tx-2);padding:5px 8px;font-size:.75rem;transition:all .15s}
-.m-nav button:hover{border-color:var(--acc-d);color:var(--acc)}
-.m-info{margin-left:auto;font-family:var(--f-mono);font-size:.6rem;color:var(--tx-3);display:flex;gap:8px;align-items:center}
-.m-info .a-genre{background:var(--acc-g);color:var(--acc);padding:1px 6px;border-radius:3px}
-.m-body{flex:1;overflow-y:auto;padding:32px 36px 60px}
+.m-head-title{font-family:var(--f-serif);font-size:.85rem;font-weight:600;color:var(--tx-1);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.m-head-meta{font-family:var(--f-mono);font-size:.6rem;color:var(--tx-3);display:flex;gap:8px;align-items:center;flex-shrink:0}
+.m-head-meta .a-genre{background:var(--acc-g);color:var(--acc);padding:1px 6px;border-radius:3px}
+
+/* Reading header actions */
+.m-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.m-actions .act-btn{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--tx-2);padding:5px 8px;font-size:.72rem;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.m-actions .act-btn:hover{border-color:var(--acc-d);color:var(--acc)}
+.m-actions .act-btn svg{flex-shrink:0}
+
+/* More actions dropdown */
+.more-wrap{position:relative}
+.more-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:4px;min-width:150px;z-index:620;opacity:0;pointer-events:none;transform:translateY(-4px);transition:all .15s}
+.more-menu.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+.more-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:var(--tx-2);padding:8px 12px;font-size:.78rem;border-radius:5px;transition:all .12s;text-align:left}
+.more-menu button:hover{background:var(--bg-3);color:var(--tx-1)}
+
+/* Reading body with optional TOC */
+.m-body-wrap{flex:1;display:flex;overflow:hidden}
+.m-toc{width:0;overflow:hidden;border-right:0 solid var(--bd);background:var(--bg-1);transition:width .25s ease,border-right .25s;flex-shrink:0;display:flex;flex-direction:column}
+.m-toc.open{width:220px;border-right-width:1px}
+.m-toc-head{padding:14px 16px 10px;font-family:var(--f-mono);font-size:.6rem;color:var(--tx-3);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.m-toc-list{flex:1;overflow-y:auto;padding:8px 0}
+.m-toc-item{display:block;padding:5px 16px;font-size:.72rem;color:var(--tx-3);cursor:pointer;transition:all .12s;border-left:2px solid transparent;text-decoration:none;line-height:1.5}
+.m-toc-item:hover{color:var(--tx-1);background:var(--bg-3)}
+.m-toc-item.active{color:var(--acc);border-left-color:var(--acc)}
+.m-toc-item.lvl-2{padding-left:28px;font-size:.68rem}
+.m-toc-item.lvl-3{padding-left:40px;font-size:.65rem}
+
+/* Reading body */
+.m-body{flex:1;overflow-y:auto;padding:0}
+.m-article-wrap{max-width:720px;margin:0 auto;padding:36px 36px 80px}
+
+/* Article meta header inside content */
+.art-header{margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--bd)}
+.art-header-title{font-family:var(--f-serif);font-size:1.6rem;font-weight:900;line-height:1.4;margin-bottom:12px;color:var(--tx-1)}
+.art-header-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--f-mono);font-size:.65rem;color:var(--tx-3)}
+.art-header-meta .a-genre{background:var(--acc-g);color:var(--acc);padding:2px 8px;border-radius:4px;font-size:.65rem}
+
+/* Bottom navigation */
+.art-bottom-nav{display:flex;gap:12px;margin-top:48px;padding-top:24px;border-top:1px solid var(--bd)}
+.art-bottom-nav button{flex:1;background:var(--bg-card);border:1px solid var(--bd);border-radius:8px;padding:14px 18px;color:var(--tx-2);font-family:var(--f-sans);font-size:.8rem;transition:all .15s;text-align:left;display:flex;flex-direction:column;gap:4px}
+.art-bottom-nav button:hover{border-color:var(--acc-d);color:var(--acc);background:var(--bg-card-h)}
+.art-bottom-nav button .bn-label{font-family:var(--f-mono);font-size:.6rem;color:var(--tx-3);text-transform:uppercase;letter-spacing:.08em}
+.art-bottom-nav button .bn-title{font-size:.78rem;color:var(--tx-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.art-bottom-nav button:disabled{opacity:.3;cursor:not-allowed}
+.art-bottom-nav button:disabled:hover{border-color:var(--bd);color:var(--tx-2);background:var(--bg-card)}
+
+/* Font size modes */
+.md.fs-sm{font-size:.82rem;line-height:1.8}
+.md.fs-md{font-size:.92rem;line-height:1.9}
+.md.fs-lg{font-size:1.05rem;line-height:2}
+
+/* Immersive mode */
+body.immersive .sb{transform:translateX(-100%)}
+body.immersive .mob-ov{display:none !important}
 
 /* ===== UPLOAD MODAL ===== */
 .up-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:600;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center}
@@ -196,27 +253,29 @@ button{cursor:pointer;font-family:inherit}
 .up-btn:hover{background:var(--acc-g)}
 
 /* ===== MD CONTENT ===== */
-.md{font-family:var(--f-sans);font-size:.9rem;line-height:1.85;color:var(--tx-1);max-width:680px}
-.md h1{font-family:var(--f-serif);font-size:1.5rem;font-weight:900;margin:1.8em 0 .7em;line-height:1.3}
+.md{font-family:var(--f-sans);font-size:.92rem;line-height:1.9;color:var(--tx-1);letter-spacing:.01em}
+.md h1{font-family:var(--f-serif);font-size:1.5rem;font-weight:900;margin:2em 0 .7em;line-height:1.35}
 .md h1:first-child{margin-top:0}
-.md h2{font-family:var(--f-serif);font-size:1.15rem;font-weight:700;margin:1.6em 0 .5em;padding-bottom:6px;border-bottom:1px solid var(--bd)}
-.md h3{font-family:var(--f-serif);font-size:1rem;font-weight:600;margin:1.4em 0 .4em;color:var(--acc)}
-.md h4,.md h5,.md h6{font-weight:700;margin:1.2em 0 .3em;font-size:.9rem}
-.md p{margin-bottom:.9em}
+.md h2{font-family:var(--f-serif);font-size:1.2rem;font-weight:700;margin:1.8em 0 .5em;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.md h3{font-family:var(--f-serif);font-size:1.05rem;font-weight:600;margin:1.6em 0 .4em;color:var(--acc)}
+.md h4,.md h5,.md h6{font-weight:700;margin:1.4em 0 .3em;font-size:.92rem}
+.md p{margin-bottom:1.1em;text-align:justify}
 .md strong{font-weight:700}
 .md em{color:var(--tx-2)}
-.md blockquote{border-left:3px solid var(--acc);padding:10px 18px;margin:1em 0;background:var(--acc-g);border-radius:0 6px 6px 0;color:var(--tx-2);font-size:.85rem}
+.md blockquote{border-left:4px solid var(--acc);padding:12px 20px;margin:1.4em 0;background:var(--acc-g);border-radius:0 8px 8px 0;color:var(--tx-2);font-size:.88rem;line-height:1.8}
 .md blockquote p:last-child{margin-bottom:0}
-.md code{font-family:var(--f-mono);font-size:.8em;background:var(--bg-3);padding:2px 5px;border-radius:3px;color:var(--acc)}
-.md pre{background:var(--bg-3);border:1px solid var(--bd);border-radius:6px;padding:16px 18px;margin:1em 0;overflow-x:auto;font-size:.78rem;line-height:1.6}
+.md code{font-family:var(--f-mono);font-size:.82em;background:var(--bg-3);padding:2px 6px;border-radius:4px;color:var(--acc)}
+.md pre{background:var(--bg-3);border:1px solid var(--bd);border-radius:8px;padding:18px 20px;margin:1.2em 0;overflow-x:auto;font-size:.8rem;line-height:1.65}
 .md pre code{background:none;padding:0;color:var(--tx-1)}
-.md ul,.md ol{margin:.7em 0;padding-left:1.6em}
-.md li{margin-bottom:.2em}
-.md hr{border:none;border-top:1px solid var(--bd);margin:1.8em 0}
-.md a{color:var(--acc);text-decoration:none;border-bottom:1px solid var(--acc-d)}
-.md table{width:100%;border-collapse:collapse;margin:1em 0;font-size:.82rem}
-.md th,.md td{padding:7px 12px;border:1px solid var(--bd);text-align:left}
+.md ul,.md ol{margin:.8em 0;padding-left:1.6em}
+.md li{margin-bottom:.3em;line-height:1.8}
+.md hr{border:none;border-top:1px solid var(--bd);margin:2em 0}
+.md a{color:var(--acc);text-decoration:none;border-bottom:1px solid var(--acc-d);transition:border-color .15s}
+.md a:hover{border-color:var(--acc)}
+.md table{width:100%;border-collapse:collapse;margin:1.2em 0;font-size:.84rem}
+.md th,.md td{padding:8px 14px;border:1px solid var(--bd);text-align:left}
 .md th{background:var(--bg-3);font-weight:600}
+.md img{max-width:100%;border-radius:6px;margin:1em 0}
 
 /* ===== MOBILE ===== */
 .mob-ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:99}
@@ -232,7 +291,14 @@ button{cursor:pointer;font-family:inherit}
   .art-wrap{padding:16px}
   .art-grid{grid-template-columns:1fr}
   .modal{width:100vw}
-  .m-body{padding:20px 16px 40px}
+  .m-body{padding:0}
+  .m-article-wrap{padding:20px 16px 60px}
+  .m-toc.open{width:180px}
+  .m-head{padding:10px 14px;gap:6px}
+  .m-head-title{font-size:.78rem}
+  .m-actions .act-btn span{display:none}
+  .art-header-title{font-size:1.3rem}
+  .art-bottom-nav{flex-direction:column}
 }
 
 /* ===== GRAIN ===== */
@@ -321,33 +387,53 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
   </main>
 </div>
 
+<!-- Reading Progress Bar -->
+<div class="read-progress" id="readProgress"><div class="read-progress-bar" id="readProgressBar"></div></div>
+
 <!-- Article Modal -->
 <div class="m-ov" id="mOv" onclick="closeModal()"></div>
 <div class="modal" id="modal">
   <div class="m-head">
-    <button class="m-close" onclick="closeModal()">✕ 关闭</button>
-    <div class="m-nav">
-      <button onclick="navArt(-1)">← 上一篇</button>
-      <button onclick="navArt(1)">下一篇 →</button>
-    </div>
-    <div class="m-info"><span class="a-genre" id="mGenre"></span><span id="mMeta"></span></div>
-    <div class="m-toolbar">
-      <button class="tb-btn" onclick="copyArticle()" title="复制全文"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>复制</span></button>
-      <div class="tb-share-wrap">
-        <button class="tb-btn" onclick="toggleShareMenu()" title="分享"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg><span>分享</span></button>
-        <div class="share-menu" id="shareMenu">
-          <button onclick="shareTo('native')"><span class="sh-ico" style="background:var(--acc)">📤</span>系统分享</button>
-          <button onclick="shareTo('wechat')"><span class="sh-ico" style="background:#07c160">微</span>微信</button>
-          <button onclick="shareTo('qq')"><span class="sh-ico" style="background:#12b7f5">Q</span>QQ</button>
-          <button onclick="shareTo('weibo')"><span class="sh-ico" style="background:#e6162d">微</span>微博</button>
-          <button onclick="shareTo('douyin')"><span class="sh-ico" style="background:#111">抖</span>抖音</button>
-          <button onclick="shareTo('link')"><span class="sh-ico" style="background:var(--acc)">🔗</span>复制链接</button>
+    <button class="m-close" onclick="closeModal()">✕</button>
+    <div class="m-head-title" id="mHeadTitle"></div>
+    <div class="m-head-meta"><span class="a-genre" id="mGenre"></span><span id="mReadTime"></span></div>
+    <div class="m-actions">
+      <button class="act-btn" onclick="toggleToc()" title="目录 (T)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h16"/></svg><span>目录</span></button>
+      <button class="act-btn" onclick="cycleFontSize()" title="字号 (+/-)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg><span id="fsLabel">字号</span></button>
+      <button class="act-btn" onclick="toggleImmersive()" title="沉浸 (F)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>沉浸</span></button>
+      <div class="more-wrap">
+        <button class="act-btn" onclick="toggleMoreMenu()" title="更多"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+        <div class="more-menu" id="moreMenu">
+          <button onclick="copyArticle()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制全文</button>
+          <button onclick="toggleShareFromMore()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>分享文章</button>
+          <button onclick="exportImage();document.getElementById('moreMenu').classList.remove('open')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>生成卡片图</button>
         </div>
       </div>
-      <button class="tb-btn" onclick="exportImage()" title="生成卡片图"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span>生成卡片</span></button>
     </div>
   </div>
-  <div class="m-body"><div class="md" id="mContent"></div></div>
+  <div class="m-body-wrap">
+    <div class="m-toc" id="mToc">
+      <div class="m-toc-head"><span>目录</span><button class="m-close" onclick="toggleToc()" style="padding:2px 6px;font-size:.65rem">✕</button></div>
+      <div class="m-toc-list" id="mTocList"></div>
+    </div>
+    <div class="m-body" id="mBody">
+      <div class="m-article-wrap">
+        <div class="art-header" id="artHeader"></div>
+        <div class="md fs-md" id="mContent"></div>
+        <div class="art-bottom-nav" id="artBottomNav"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Menu (floating) -->
+<div class="share-menu" id="shareMenu" style="position:fixed;z-index:630">
+  <button onclick="shareTo('native')"><span class="sh-ico" style="background:var(--acc)">📤</span>系统分享</button>
+  <button onclick="shareTo('wechat')"><span class="sh-ico" style="background:#07c160">微</span>微信</button>
+  <button onclick="shareTo('qq')"><span class="sh-ico" style="background:#12b7f5">Q</span>QQ</button>
+  <button onclick="shareTo('weibo')"><span class="sh-ico" style="background:#e6162d">微</span>微博</button>
+  <button onclick="shareTo('douyin')"><span class="sh-ico" style="background:#111">抖</span>抖音</button>
+  <button onclick="shareTo('link')"><span class="sh-ico" style="background:var(--acc)">🔗</span>复制链接</button>
 </div>
 
 <!-- Upload Modal -->
@@ -469,13 +555,60 @@ function getTopicCounts() {
 // ===== INIT =====
 function init() {
   restoreTheme();
+  applyFontSize(currentFs);
   buildNav();
   showHome();
   updateStats();
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeUpload(); }
+    // Close modals on Escape
+    if (e.key === 'Escape') { closeModal(); closeUpload(); closeImgPreview(); }
+
+    // Search shortcut
     if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
       e.preventDefault(); document.getElementById('searchIn').focus();
+    }
+
+    // Reading shortcuts (only when modal is open)
+    if (document.getElementById('modal').classList.contains('open')) {
+      // T — toggle TOC
+      if (e.key === 't' || e.key === 'T') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault(); toggleToc();
+        }
+      }
+      // F — toggle immersive
+      if (e.key === 'f' || e.key === 'F') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault(); toggleImmersive();
+        }
+      }
+      // + or = — increase font size
+      if (e.key === '=' || e.key === '+') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          const idx = FS_MODES.indexOf(currentFs);
+          if (idx < FS_MODES.length - 1) applyFontSize(FS_MODES[idx + 1]);
+        }
+      }
+      // - — decrease font size
+      if (e.key === '-') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          const idx = FS_MODES.indexOf(currentFs);
+          if (idx > 0) applyFontSize(FS_MODES[idx - 1]);
+        }
+      }
+      // Arrow keys for prev/next
+      if (e.key === 'ArrowLeft') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          navArt(-1);
+        }
+      }
+      if (e.key === 'ArrowRight') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          navArt(1);
+        }
+      }
     }
   });
 }
@@ -744,27 +877,218 @@ async function openArt(idx) {
   curArtIdx = idx;
   const a = curArticles[idx];
   if (!a) return;
+
+  // Header info
+  document.getElementById('mHeadTitle').textContent = a.title;
   document.getElementById('mGenre').textContent = a.genre;
   document.getElementById('mGenre').style.background = (GENRE_COLORS[a.genre]||'#888') + '22';
   document.getElementById('mGenre').style.color = GENRE_COLORS[a.genre]||'#888';
-  // Set adaptive modal background glow
+
+  // Reading time
+  const readMin = Math.max(1, Math.round(a.chars / 400));
+  document.getElementById('mReadTime').textContent = `约 ${readMin} 分钟`;
+
+  // Modal glow
   const gc = GENRE_COLORS[a.genre]||'#888';
   document.getElementById('modal').style.setProperty('--modal-glow', `radial-gradient(ellipse at 30% 20%, ${gc}, transparent 60%), radial-gradient(ellipse at 80% 80%, ${gc}88, transparent 50%)`);
-  document.getElementById('mMeta').textContent = `${a.origin} · ${a.cell} · ${a.chars > 1000 ? (a.chars/1000).toFixed(1)+'k' : a.chars}字`;
+
+  // Article header inside content
+  document.getElementById('artHeader').innerHTML = `
+    <div class="art-header-title">${escH(a.title)}</div>
+    <div class="art-header-meta">
+      <span class="a-genre" style="background:${gc}22;color:${gc}">${a.genre}</span>
+      <span>${a.topic}</span>
+      <span>${a.origin} · ${a.cell}</span>
+      <span>${a.chars > 1000 ? (a.chars/1000).toFixed(1)+'k' : a.chars} 字</span>
+      <span>约 ${readMin} 分钟阅读</span>
+    </div>
+  `;
+
   document.getElementById('mContent').innerHTML = '<p style="color:var(--tx-3)">加载中...</p>';
+  document.getElementById('artBottomNav').innerHTML = '';
   document.getElementById('mOv').classList.add('open');
   document.getElementById('modal').classList.add('open');
-  document.querySelector('.m-body').scrollTop = 0;
+
+  const mBody = document.getElementById('mBody');
+  mBody.scrollTop = 0;
+
+  // Load content
   const content = await loadContent(a);
   document.getElementById('mContent').innerHTML = marked.parse(content, { breaks: true, gfm: true });
+
+  // Add IDs to headings for TOC
+  const headings = document.querySelectorAll('#mContent h1, #mContent h2, #mContent h3');
+  headings.forEach((h, i) => { h.id = 'heading-' + i; });
+
+  // Build TOC
+  buildToc();
+
+  // Bottom navigation
+  buildBottomNav();
+
+  // Show progress bar
+  document.getElementById('readProgress').classList.add('active');
+  mBody.addEventListener('scroll', updateReadProgress);
+
+  // Restore reading position
+  const savedPos = localStorage.getItem('read_pos_' + a.id);
+  if (savedPos) {
+    setTimeout(() => { mBody.scrollTop = parseInt(savedPos); }, 100);
+  }
+}
+
+function updateReadProgress() {
+  const mBody = document.getElementById('mBody');
+  const progress = mBody.scrollTop / (mBody.scrollHeight - mBody.clientHeight);
+  document.getElementById('readProgressBar').style.width = Math.min(100, Math.max(0, progress * 100)) + '%';
+
+  // Update active TOC item
+  updateActiveTocItem();
+}
+
+function buildToc() {
+  const headings = document.querySelectorAll('#mContent h1, #mContent h2, #mContent h3');
+  const tocList = document.getElementById('mTocList');
+  if (!headings.length) {
+    tocList.innerHTML = '<div style="padding:16px;color:var(--tx-3);font-size:.72rem">本文无标题</div>';
+    return;
+  }
+  tocList.innerHTML = Array.from(headings).map((h, i) => {
+    const lvl = parseInt(h.tagName[1]);
+    const cls = lvl === 2 ? 'lvl-2' : lvl === 3 ? 'lvl-3' : '';
+    return `<a class="m-toc-item ${cls}" data-idx="${i}" onclick="scrollToHeading(${i})">${h.textContent}</a>`;
+  }).join('');
+}
+
+function scrollToHeading(idx) {
+  const heading = document.getElementById('heading-' + idx);
+  if (heading) {
+    const mBody = document.getElementById('mBody');
+    const offset = heading.offsetTop - 20;
+    mBody.scrollTo({ top: offset, behavior: 'smooth' });
+  }
+}
+
+function updateActiveTocItem() {
+  const headings = document.querySelectorAll('#mContent h1, #mContent h2, #mContent h3');
+  const mBody = document.getElementById('mBody');
+  const scrollTop = mBody.scrollTop + 80;
+  let activeIdx = 0;
+  headings.forEach((h, i) => {
+    if (h.offsetTop <= scrollTop) activeIdx = i;
+  });
+  document.querySelectorAll('.m-toc-item').forEach((item, i) => {
+    item.classList.toggle('active', i === activeIdx);
+  });
+}
+
+function buildBottomNav() {
+  const prev = curArtIdx > 0 ? curArticles[curArtIdx - 1] : null;
+  const next = curArtIdx < curArticles.length - 1 ? curArticles[curArtIdx + 1] : null;
+  document.getElementById('artBottomNav').innerHTML = `
+    <button ${prev ? `onclick="navArt(-1)"` : 'disabled'}>
+      <span class="bn-label">← 上一篇</span>
+      <span class="bn-title">${prev ? escH(prev.title) : '已经是第一篇'}</span>
+    </button>
+    <button ${next ? `onclick="navArt(1)"` : 'disabled'} style="text-align:right">
+      <span class="bn-label">下一篇 →</span>
+      <span class="bn-title">${next ? escH(next.title) : '已经是最后一篇'}</span>
+    </button>
+  `;
+}
+
+function toggleToc() {
+  document.getElementById('mToc').classList.toggle('open');
+}
+
+// Font size cycling
+const FS_MODES = ['fs-sm', 'fs-md', 'fs-lg'];
+const FS_LABELS = { 'fs-sm': '小', 'fs-md': '中', 'fs-lg': '大' };
+let currentFs = localStorage.getItem('kb_fontsize') || 'fs-md';
+
+function applyFontSize(fs) {
+  currentFs = fs;
+  localStorage.setItem('kb_fontsize', fs);
+  const el = document.getElementById('mContent');
+  el.classList.remove(...FS_MODES);
+  el.classList.add(fs);
+  document.getElementById('fsLabel').textContent = FS_LABELS[fs];
+}
+
+function cycleFontSize() {
+  const idx = FS_MODES.indexOf(currentFs);
+  const next = FS_MODES[(idx + 1) % FS_MODES.length];
+  applyFontSize(next);
+}
+
+// Immersive mode
+let isImmersive = false;
+function toggleImmersive() {
+  isImmersive = !isImmersive;
+  document.body.classList.toggle('immersive', isImmersive);
+}
+
+// More menu
+function toggleMoreMenu() {
+  document.getElementById('moreMenu').classList.toggle('open');
+}
+
+// Share from more menu
+function toggleShareFromMore() {
+  document.getElementById('moreMenu').classList.remove('open');
+  const sm = document.getElementById('shareMenu');
+  sm.classList.toggle('open');
+  if (sm.classList.contains('open')) {
+    // Position near the more button
+    const btn = document.querySelector('.more-wrap .act-btn');
+    const rect = btn.getBoundingClientRect();
+    sm.style.top = (rect.bottom + 6) + 'px';
+    sm.style.right = (window.innerWidth - rect.right) + 'px';
+    setTimeout(() => {
+      const handler = (e) => {
+        if (!sm.contains(e.target) && !e.target.closest('.more-wrap')) {
+          sm.classList.remove('open');
+          document.removeEventListener('click', handler);
+        }
+      };
+      document.addEventListener('click', handler);
+    }, 10);
+  }
 }
 function closeModal() {
+  // Save reading position
+  if (curArtIdx >= 0 && curArticles[curArtIdx]) {
+    const mBody = document.getElementById('mBody');
+    localStorage.setItem('read_pos_' + curArticles[curArtIdx].id, mBody.scrollTop);
+  }
+  // Hide progress bar
+  document.getElementById('readProgress').classList.remove('active');
+  document.getElementById('readProgressBar').style.width = '0';
+  const mBody = document.getElementById('mBody');
+  mBody.removeEventListener('scroll', updateReadProgress);
+
+  // Exit immersive mode
+  if (isImmersive) {
+    isImmersive = false;
+    document.body.classList.remove('immersive');
+  }
+
   document.getElementById('mOv').classList.remove('open');
   document.getElementById('modal').classList.remove('open');
+  document.getElementById('mToc').classList.remove('open');
+  document.getElementById('moreMenu').classList.remove('open');
+  document.getElementById('shareMenu').classList.remove('open');
 }
 function navArt(dir) {
   const next = curArtIdx + dir;
-  if (next >= 0 && next < curArticles.length) openArt(next);
+  if (next >= 0 && next < curArticles.length) {
+    // Save current position before navigating
+    if (curArticles[curArtIdx]) {
+      const mBody = document.getElementById('mBody');
+      localStorage.setItem('read_pos_' + curArticles[curArtIdx].id, mBody.scrollTop);
+    }
+    openArt(next);
+  }
 }
 
 // ===== COPY =====
@@ -795,7 +1119,7 @@ function toggleShareMenu() {
   if (m.classList.contains('open')) {
     setTimeout(() => {
       const handler = (e) => {
-        if (!m.contains(e.target) && !e.target.closest('.tb-share-wrap')) {
+        if (!m.contains(e.target) && !e.target.closest('.more-wrap')) {
           m.classList.remove('open');
           document.removeEventListener('click', handler);
         }
@@ -1335,8 +1659,6 @@ function toast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-
-loadData();
 </script>
 </body>
 </html>

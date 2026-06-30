@@ -409,5 +409,86 @@ modal.style.setProperty('--modal-glow',
 
 ---
 
-*更新时间: 2026-03-19*
+## 2026-06-30：阅读体验重构
+
+### 问题
+
+笔记收纳做得还可以，但点开文章后的阅读体验不够好：
+
+1. **空间浪费** — 内容区 max-width: 680px 且左对齐，右侧大片空白
+2. **工具栏拥挤** — 关闭、导航、元数据、复制、分享、生成卡片全堆在顶栏
+3. **缺少阅读辅助** — 无进度条、无目录导航、无预估阅读时间、无字号调节
+4. **排版粗糙** — 行距、段距、引用块等细节不够讲究
+5. **无沉浸模式** — 侧边栏和 UI 元素始终可见，干扰深度阅读
+6. **不记住阅读位置** — 关闭后重新打开要重新滚动
+
+### 解决方案
+
+分三个阶段实施：
+
+**第一阶段：核心体验**
+- 阅读进度条（顶部 3px 细线，随滚动变化）
+- 预估阅读时间（基于字数，显示在标题栏和内容头部）
+- 内容居中 + 排版优化（max-width 提升到 720px，行距 1.9，段距 1.1em）
+- 工具栏精简（复制/分享/生成卡片移入「⋮」更多菜单）
+
+**第二阶段：导航增强**
+- 浮动目录（TOC）：自动提取 H1-H3，点击跳转，可折叠
+- 阅读位置保存：localStorage 记录滚动位置，下次打开自动恢复
+- 上一篇/下一篇移到底部（阅读完成后更自然）
+
+**第三阶段：个性化**
+- 字体大小调节（小/中/大三档，localStorage 持久化）
+- 沉浸模式：隐藏侧边栏，只保留内容
+- 快捷键：`T` 切换目录，`F` 全屏沉浸，`+/-` 调整字号，`←/→` 切换文章
+
+### 技术实现
+
+**阅读进度条**
+```javascript
+function updateReadProgress() {
+  const mBody = document.getElementById('mBody');
+  const progress = mBody.scrollTop / (mBody.scrollHeight - mBody.clientHeight);
+  document.getElementById('readProgressBar').style.width = Math.min(100, Math.max(0, progress * 100)) + '%';
+  updateActiveTocItem();
+}
+```
+
+**目录提取**
+```javascript
+function buildToc() {
+  const headings = document.querySelectorAll('#mContent h1, #mContent h2, #mContent h3');
+  headings.forEach((h, i) => { h.id = 'heading-' + i; });
+  // 生成 TOC 列表，点击跳转到对应标题
+}
+```
+
+**阅读位置保存**
+```javascript
+// 关闭时保存
+localStorage.setItem('read_pos_' + a.id, mBody.scrollTop);
+
+// 打开时恢复
+const savedPos = localStorage.getItem('read_pos_' + a.id);
+if (savedPos) mBody.scrollTop = parseInt(savedPos);
+```
+
+### 改动清单
+
+- `index.html`: 新增阅读进度条、重构模态框 HTML、添加 TOC 侧边栏、底部导航、更多菜单
+- CSS: 新增进度条、TOC、字号模式、沉浸模式、排版优化、移动端适配
+- JS: 新增 `toggleToc()`、`buildToc()`、`cycleFontSize()`、`toggleImmersive()`、`toggleMoreMenu()`、`toggleShareFromMore()`、`updateReadProgress()`、`scrollToHeading()`、`buildBottomNav()`
+- 修复：移除重复的 `loadData()` 调用
+
+### 效果
+
+- **阅读效率提升**：目录导航 + 进度条，快速定位
+- **视觉舒适度提升**：居中排版 + 优化字距行距
+- **沉浸感增强**：精简工具栏 + 沉浸模式
+- **个性化适配**：字体大小调节，适应不同用户
+- **状态持久化**：阅读位置、字号偏好、主题选择全部记住
+
+---
+
+*更新时间: 2026-06-30*
 *构建工具: Python (openpyxl, json) + 原生 HTML/CSS/JS + GitHub Pages*
