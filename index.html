@@ -55,6 +55,25 @@
   --bd: #d5d0c8;
   --bd-l: #c5c0b8;
 }
+[data-theme="ocean"] {
+  --bg-0: #060d16;
+  --bg-1: #0a1628;
+  --bg-2: #0f1f38;
+  --bg-3: #15294a;
+  --bg-4: #1c345c;
+  --bg-card: #0c1a30;
+  --bg-card-h: #112440;
+  --tx-1: #dce8f5;
+  --tx-2: #8aa4c0;
+  --tx-3: #4e6a88;
+  --tx-4: #2a3e55;
+  --acc: #4db8d8;
+  --acc-d: #2e8aaa;
+  --acc-g: rgba(77,184,216,0.10);
+  --acc-b: #6dd0ee;
+  --bd: #1a3050;
+  --bd-l: #254060;
+}
 
 /* ===== RESET ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -288,7 +307,7 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
     <nav class="sb-nav" id="sbNav"></nav>
     <div class="sb-foot">
       <div class="st" id="stDisplay"></div>
-      <button class="th-btn" onclick="toggleTheme()"><span id="thIco">◐</span><span>主题</span></button>
+      <button class="th-btn" onclick="toggleTheme()"><span id="thIco">◐</span><span id="thLbl">暗夜</span></button>
     </div>
   </aside>
 
@@ -386,7 +405,7 @@ let view = 'home';
 let curFilter = null;
 let curArticles = [];
 let curArtIdx = -1;
-let isDark = true;
+let currentTheme = localStorage.getItem('kb_theme') || 'dark';
 let uploadedArticles = JSON.parse(localStorage.getItem('kb_uploaded') || '[]');
 let allArticles = [];
 
@@ -449,6 +468,7 @@ function getTopicCounts() {
 
 // ===== INIT =====
 function init() {
+  restoreTheme();
   buildNav();
   showHome();
   updateStats();
@@ -598,13 +618,12 @@ function renderDashboard() {
 }
 
 function getChartTheme() {
-  return {
-    bg: 'transparent',
-    tx: isDark ? '#9a9690' : '#6a665f',
-    txDim: isDark ? '#3a3630' : '#ccc8c0',
-    line: isDark ? '#252529' : '#d5d0c8',
-    acc: '#c9a84c'
+  const themes = {
+    dark:  { tx: '#9a9690', txDim: '#3a3630', line: '#252529', cardBg: '#131317', labelColor: '#e8e5df', heatLow: '#1a1a1f', acc: '#c9a84c', accDark: '#8a7235', accRgba: '201,168,76' },
+    light: { tx: '#6a665f', txDim: '#ccc8c0', line: '#d5d0c8', cardBg: '#faf8f3', labelColor: '#1a1815', heatLow: '#f0ede6', acc: '#8a6d20', accDark: '#b8973a', accRgba: '138,109,32' },
+    ocean: { tx: '#8aa4c0', txDim: '#2a3e55', line: '#1a3050', cardBg: '#0c1a30', labelColor: '#dce8f5', heatLow: '#0f1f38', acc: '#4db8d8', accDark: '#2e8aaa', accRgba: '77,184,216' }
   };
+  return { bg: 'transparent', ...(themes[currentTheme] || themes.dark) };
 }
 
 function renderCharts() {
@@ -619,7 +638,7 @@ function renderCharts() {
     series: [{
       type: 'pie', radius: ['42%', '72%'], center: ['50%', '52%'],
       label: { color: th.tx, fontSize: 11 },
-      itemStyle: { borderColor: isDark ? '#131317' : '#faf8f3', borderWidth: 2 },
+      itemStyle: { borderColor: th.cardBg, borderWidth: 2 },
       data: GENRES.filter(g => gc[g]).map(g => ({ name: g, value: gc[g], itemStyle: { color: GENRE_COLORS[g] } }))
     }]
   });
@@ -651,7 +670,7 @@ function renderCharts() {
     grid: { left: 50, right: 30, top: 20, bottom: 30 },
     xAxis: { type: 'category', data: bins.map(b => b.label), axisLabel: { color: th.tx, fontSize: 10 }, axisLine: { lineStyle: { color: th.line } } },
     yAxis: { type: 'value', splitLine: { lineStyle: { color: th.line } }, axisLabel: { color: th.tx, fontSize: 10 } },
-    series: [{ type: 'bar', data: binCounts, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#c9a84c' }, { offset: 1, color: '#8a7235' }] }, borderRadius: [3, 3, 0, 0] }, barWidth: 30 }]
+    series: [{ type: 'bar', data: binCounts, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: th.acc }, { offset: 1, color: th.accDark }] }, borderRadius: [3, 3, 0, 0] }, barWidth: 30 }]
   });
 
   // 4. Timeline
@@ -663,7 +682,7 @@ function renderCharts() {
     grid: { left: 50, right: 20, top: 20, bottom: 80 },
     xAxis: { type: 'category', data: origins, axisLabel: { color: th.tx, fontSize: 9, rotate: 40 }, axisLine: { lineStyle: { color: th.line } } },
     yAxis: { type: 'value', splitLine: { lineStyle: { color: th.line } }, axisLabel: { color: th.tx, fontSize: 10 } },
-    series: [{ type: 'line', data: originCounts, smooth: true, lineStyle: { color: th.acc, width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(201,168,76,0.3)' }, { offset: 1, color: 'rgba(201,168,76,0)' }] } }, itemStyle: { color: th.acc }, symbolSize: 6 }]
+    series: [{ type: 'line', data: originCounts, smooth: true, lineStyle: { color: th.acc, width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: `rgba(${th.accRgba},0.3)` }, { offset: 1, color: `rgba(${th.accRgba},0)` }] } }, itemStyle: { color: th.acc }, symbolSize: 6 }]
   });
 
   // 5. Heatmap: genre x topic
@@ -681,8 +700,8 @@ function renderCharts() {
     grid: { left: 90, right: 40, top: 10, bottom: 80 },
     xAxis: { type: 'category', data: topTopics, axisLabel: { color: th.tx, fontSize: 9, rotate: 35 }, axisLine: { lineStyle: { color: th.line } } },
     yAxis: { type: 'category', data: GENRES, axisLabel: { color: th.tx, fontSize: 10 }, axisLine: { lineStyle: { color: th.line } } },
-    visualMap: { min: 0, max: Math.max(...heatData.map(d => d[2]), 1), calculable: false, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: [isDark ? '#1a1a1f' : '#f0ede6', '#c9a84c', '#e4c35a'] }, textStyle: { color: th.tx, fontSize: 10 }, show: false },
-    series: [{ type: 'heatmap', data: heatData, label: { show: true, color: isDark ? '#e8e5df' : '#1a1815', fontSize: 10 }, itemStyle: { borderColor: isDark ? '#131317' : '#faf8f3', borderWidth: 2 } }]
+    visualMap: { min: 0, max: Math.max(...heatData.map(d => d[2]), 1), calculable: false, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: [th.heatLow, th.acc, th.accDark] }, textStyle: { color: th.tx, fontSize: 10 }, show: false },
+    series: [{ type: 'heatmap', data: heatData, label: { show: true, color: th.labelColor, fontSize: 10 }, itemStyle: { borderColor: th.cardBg, borderWidth: 2 } }]
   });
 
   // 6. Topic chars bar
@@ -695,7 +714,7 @@ function renderCharts() {
     grid: { left: 120, right: 30, top: 10, bottom: 20 },
     xAxis: { type: 'value', splitLine: { lineStyle: { color: th.line } }, axisLabel: { color: th.tx, fontSize: 10, formatter: v => (v/10000).toFixed(0)+'w' } },
     yAxis: { type: 'category', data: tcSorted.map(t => t[0]).reverse(), axisLabel: { color: th.tx, fontSize: 10 }, axisLine: { lineStyle: { color: th.line } } },
-    series: [{ type: 'bar', data: tcSorted.map(t => t[1]).reverse(), itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#8a7235' }, { offset: 1, color: '#c9a84c' }] }, borderRadius: [0, 3, 3, 0] }, barWidth: 14 }]
+    series: [{ type: 'bar', data: tcSorted.map(t => t[1]).reverse(), itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: th.accDark }, { offset: 1, color: th.acc }] }, borderRadius: [0, 3, 3, 0] }, barWidth: 14 }]
   });
 
   // Resize listener
@@ -1271,11 +1290,31 @@ function submitUpload() {
 }
 
 // ===== THEME =====
+const THEME_CYCLE = ['dark', 'light', 'ocean'];
+const THEME_ICONS = { dark: '◐', light: '◑', ocean: '◒' };
+const THEME_LABELS = { dark: '暗夜', light: '日间', ocean: '深海' };
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem('kb_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
+  document.getElementById('thIco').textContent = THEME_ICONS[theme];
+  document.getElementById('thLbl').textContent = THEME_LABELS[theme];
+}
+
 function toggleTheme() {
-  isDark = !isDark;
-  document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
-  document.getElementById('thIco').textContent = isDark ? '◐' : '◑';
+  const idx = THEME_CYCLE.indexOf(currentTheme);
+  const next = THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
+  applyTheme(next);
   if (view === 'home') renderDashboard();
+}
+
+// Restore saved theme on load
+function restoreTheme() {
+  const saved = localStorage.getItem('kb_theme');
+  if (saved && THEME_CYCLE.includes(saved)) {
+    applyTheme(saved);
+  }
 }
 
 // ===== UTILS =====
