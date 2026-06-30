@@ -157,10 +157,14 @@ button{cursor:pointer;font-family:inherit}
 /* ===== MODAL (READING VIEW) ===== */
 .m-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:500;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
 .m-ov.open{opacity:1;pointer-events:auto}
-.modal{position:fixed;top:0;right:0;width:min(900px,100vw);height:100vh;background:var(--bg-1);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-left:1px solid var(--bd);overflow:hidden}
+.modal{position:fixed;top:50%;left:50%;width:min(900px,92vw);height:min(92vh,100vh);background:var(--bg-1);z-index:501;transform:translate(-50%,-50%) scale(.96);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .25s;display:flex;flex-direction:column;border:1px solid var(--bd);border-radius:12px;overflow:hidden;opacity:0;pointer-events:none}
 .modal::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.04;pointer-events:none;z-index:0;transition:background .4s;background:var(--modal-glow,transparent)}
 .modal>*{position:relative;z-index:1}
-.modal.open{transform:translateX(0)}
+.modal.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+
+/* Fullscreen mode */
+.modal.fullscreen{width:100vw;height:100vh;top:0;left:0;transform:translate(0,0) scale(1);border-radius:0;border:none}
+.modal.fullscreen.open{transform:translate(0,0) scale(1)}
 
 /* Reading header — slim, clean */
 .m-head{display:flex;align-items:center;padding:12px 28px;border-bottom:1px solid var(--bd);gap:10px;flex-shrink:0}
@@ -290,7 +294,8 @@ body.immersive .mob-ov{display:none !important}
   .dash-row.r2,.dash-row.r3{grid-template-columns:1fr}
   .art-wrap{padding:16px}
   .art-grid{grid-template-columns:1fr}
-  .modal{width:100vw}
+  .modal{width:100vw;height:100vh;top:0;left:0;transform:translate(0,0) scale(1);border-radius:0;border:none}
+  .modal.open{transform:translate(0,0) scale(1)}
   .m-body{padding:0}
   .m-article-wrap{padding:20px 16px 60px}
   .m-toc.open{width:180px}
@@ -400,6 +405,7 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointe
     <div class="m-actions">
       <button class="act-btn" onclick="toggleToc()" title="目录 (T)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h16"/></svg><span>目录</span></button>
       <button class="act-btn" onclick="cycleFontSize()" title="字号 (+/-)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg><span id="fsLabel">字号</span></button>
+      <button class="act-btn" onclick="toggleFullscreen()" title="全屏 (G)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>全屏</span></button>
       <button class="act-btn" onclick="toggleImmersive()" title="沉浸 (F)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>沉浸</span></button>
       <div class="more-wrap">
         <button class="act-btn" onclick="toggleMoreMenu()" title="更多"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
@@ -574,6 +580,12 @@ function init() {
       if (e.key === 't' || e.key === 'T') {
         if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
           e.preventDefault(); toggleToc();
+        }
+      }
+      // G — toggle fullscreen
+      if (e.key === 'g' || e.key === 'G') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault(); toggleFullscreen();
         }
       }
       // F — toggle immersive
@@ -1021,6 +1033,13 @@ function cycleFontSize() {
   applyFontSize(next);
 }
 
+// Fullscreen mode
+let isFullscreen = false;
+function toggleFullscreen() {
+  isFullscreen = !isFullscreen;
+  document.getElementById('modal').classList.toggle('fullscreen', isFullscreen);
+}
+
 // Immersive mode
 let isImmersive = false;
 function toggleImmersive() {
@@ -1071,6 +1090,12 @@ function closeModal() {
   if (isImmersive) {
     isImmersive = false;
     document.body.classList.remove('immersive');
+  }
+
+  // Exit fullscreen mode
+  if (isFullscreen) {
+    isFullscreen = false;
+    document.getElementById('modal').classList.remove('fullscreen');
   }
 
   document.getElementById('mOv').classList.remove('open');
